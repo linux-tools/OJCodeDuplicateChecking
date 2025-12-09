@@ -62,12 +62,12 @@ dashscope:
 
 ### 项目编译与运行
 
-#### 使用Maven直接打包
+### 使用Maven直接打包
 
 1. 打开命令行工具，进入项目根目录
 
    ```bash
-   cd d:\IdeaProjects\MyAI
+   cd c:\Users\qweio\Desktop\OJCodeDuplicateChecking
    ```
 
 2. 执行Maven编译命令
@@ -82,28 +82,9 @@ dashscope:
    java -jar target\codeDuplicateChecking-1.0_alpha1.jar
    ```
 
-#### 使用自动化打包脚本
+### 注意
 
-我们提供了一个自动化打包脚本，可以简化打包过程并提供额外的功能：
-
-1. 进入项目根目录
-
-   ```bash
-   cd d:\IdeaProjects\MyAI
-   ```
-
-2. 执行打包脚本
-
-   ```bash
-   python package_project.py
-   ```
-
-   脚本参数说明：
-
-   ```bash
-   # 查看帮助信息
-   python package_project.py --help
-   ```
+> 项目暂不包含自动化打包脚本，推荐使用Maven直接打包。
 
 3. 运行应用程序
 
@@ -113,24 +94,122 @@ dashscope:
 
 运行成功后，应用将在`http://localhost:8080`上提供服务。
 
+## Docker部署指南
+
+本章节提供了如何使用Docker容器化部署本SpringBoot项目的详细步骤。
+
+### 功能特点
+
+- 基于JDK 8的Alpine轻量镜像
+- 支持通过环境变量配置SpringBoot端口
+- 多阶段构建减小镜像体积
+- 非root用户运行提高安全性
+
+### 构建Docker镜像
+
+在项目根目录执行以下命令构建Docker镜像：
+
+```bash
+docker build -t oj-code-duplicate-checking .
+```
+
+### 运行Docker容器
+
+#### 默认配置运行
+
+使用默认端口8080运行容器：
+
+```bash
+docker run -d -p 8080:8080 --name oj-code-duplicate-container oj-code-duplicate-checking
+```
+
+#### 自定义端口运行
+
+通过环境变量`SERVER_PORT`自定义SpringBoot端口：
+
+```bash
+# 容器内部使用9090端口，映射到主机9090端口
+docker run -d -p 9090:9090 -e SERVER_PORT=9090 --name oj-code-duplicate-container oj-code-duplicate-checking
+```
+
+```bash
+# 容器内部使用8080端口，映射到主机8888端口
+docker run -d -p 8888:8080 --name oj-code-duplicate-container oj-code-duplicate-checking
+```
+
+#### 配置API密钥
+
+通过环境变量配置千问API密钥：
+
+```bash
+docker run -d -p 8080:8080 \
+  -e SERVER_PORT=8080 \
+  -e DASHSCOPE_API_KEY=your_api_key_here \
+  --name oj-code-duplicate-container oj-code-duplicate-checking
+```
+
+### 常用Docker命令
+
+#### 查看容器状态
+
+```bash
+docker ps
+```
+
+#### 查看容器日志
+
+```bash
+docker logs oj-code-duplicate-container
+```
+
+#### 进入容器内部
+
+```bash
+docker exec -it oj-code-duplicate-container sh
+```
+
+#### 停止并删除容器
+
+```bash
+docker stop oj-code-duplicate-container
+docker rm oj-code-duplicate-container
+```
+
+### 注意事项
+
+1. 确保已安装Docker环境
+2. 构建镜像前请先确认项目能够正常构建
+3. API密钥等敏感信息请通过环境变量传递，避免硬编码
+4. 默认端口为8080，可根据需要自定义配置
+
 ## 项目结构
 
 ```text
 .
-├── src/                  # 源代码目录
-│   ├── main/             # 主要源码
-│   │   ├── java/         # Java源代码
-│   │   └── resources/    # 资源文件(包含application.yml)
-│   └── test/             # 测试代码
-├── target/               # 编译输出目录(包含打包的JAR文件)
-├── pom.xml               # Maven项目配置文件
-├── package_project.py    # 自动化打包脚本
-└── logs/                 # 打包脚本日志目录
+├── src/                               # 源代码目录
+│   ├── main/                          # 主要源码
+│   │   ├── java/                      # Java源代码
+│   │   │   └── org/codeDuplicateChecking/ # 主包路径
+│   │   └── resources/                 # 资源文件
+│   │       ├── META-INF/              # 元数据信息
+│   │       │   └── spring-configuration-metadata.json # Spring配置元数据
+│   │       ├── application.yml        # 应用配置文件
+│   │       └── static/                # 静态资源
+│   │           └── index.html         # 首页
+│   └── test/                          # 测试代码
+│       └── java/org/codeDuplicateChecking/ # 测试包路径
+├── .gitignore                         # Git忽略配置
+├── Dockerfile                         # Docker构建文件
+├── LICENSE                            # 许可证文件
+├── README.md                          # 项目说明文档
+└── pom.xml                            # Maven项目配置文件
 ```
 
 ## API使用说明
 
 ### 1. 代码查重核心接口
+
+**说明**: 所有接口都实现了完善的错误处理机制，包括请求参数验证、异常捕获、状态码处理和空值检查等。
 
 #### 1.1 两代码块比较接口
 
@@ -167,10 +246,13 @@ dashscope:
 ```json
 {
   "codeBlocks": [ /* 多个代码块 */ ],
-  "threshold": 0.7,
-  "needDetailedAnalysis": true
+  "threshold": 0.7
 }
-```
+
+**注意**: 
+- 代码块数组至少需要包含2个代码块，否则会返回400错误
+- 系统会自动进行参数验证并提供详细的错误信息
+- 接口实现了完善的异常处理机制，确保稳定性
 
 #### 1.3 获取支持的编程语言列表
 
