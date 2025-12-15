@@ -2,7 +2,7 @@
 dashscope:
   api:
     # 请在此处配置您的通义千问API密钥
-    key: ""
+    key: "sk-1c8c53d22dbd436cbff2300221b0ca15"
   # 指定使用的千问模型
   model: "qwen-plus"
   
