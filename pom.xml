@@ -20,7 +20,7 @@
     <!-- 与Hcode OJ项目保持一致的groupId和版本 -->
     <groupId>top.hcode</groupId>
     <artifactId>codeDuplicateChecking</artifactId>
-    <version>1.0_alpha1</version>
+    <version>1.0_alpha2</version>
     <packaging>jar</packaging>
 
     <properties>
@@ -32,7 +32,7 @@
         <dashscope.sdk.version>2.22.2</dashscope.sdk.version>
     </properties>
 
-    <!-- 依赖管理 - 引入Hcode OJ使用的依赖管理 -->
+    <!-- 依赖管理 -->
     <dependencyManagement>
         <dependencies>
             <!--Springcloud的依赖-->
@@ -71,7 +71,7 @@
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
         
-        <!-- OkHttp 明确版本依赖，解决版本冲突 -->
+        <!-- OkHttp -->
         <dependency>
             <groupId>com.squareup.okhttp3</groupId>
             <artifactId>okhttp</artifactId>

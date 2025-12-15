@@ -2,91 +2,213 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>AI助手 - 聊天与代码查重</title>
+    <title>AI代码查重系统</title>
     <style>
+        :root {
+            --bg-color: #f5f7fa;
+            --card-bg: #ffffff;
+            --primary-color: #1890ff;
+            --primary-hover: #40a9ff;
+            --primary-active: #096dd9;
+            --text-color: #333333;
+            --border-color: #d9d9d9;
+            --shadow: 0 2px 8px rgba(0, 0, 0, 0.09);
+            --success-bg: #f6ffed;
+            --warning-bg: #fffbe6;
+            --error-bg: #fff2f8;
+            --info-bg: #e6f7ff;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', 'Microsoft YaHei', Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 20px;
         }
-        .tab-container {
+        
+        header {
+            text-align: center;
+            margin-bottom: 24px;
+            padding: 16px 0;
+        }
+        
+        h1 {
+            font-size: 28px;
+            color: #1a365d;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        
+        .subtitle {
+            color: #64748b;
+            font-size: 16px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .ai-status {
+            display: inline-block;
+            margin-left: 10px;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .ai-status.connected {
+            background-color: #e6f7ff;
+            color: #1890ff;
+            border: 1px solid #91d5ff;
+        }
+        
+        .ai-status.disconnected {
+            background-color: #fff2f8;
+            color: #f5222d;
+            border: 1px solid #ffccc7;
+        }
+        
+        .card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            padding: 24px;
+            margin-bottom: 24px;
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+        }
+        
+        .status-bar {
             display: flex;
-            margin-bottom: 20px;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 24px;
+            padding: 12px 16px;
+            background: #e6f7ff;
+            border-radius: 6px;
+            border: 1px solid #91d5ff;
         }
-        .tab-button {
-            padding: 10px 20px;
-            background-color: #f1f1f1;
-            border: none;
-            cursor: pointer;
-            margin-right: 5px;
+        
+        .status-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        .tab-button.active {
-            background-color: #4CAF50;
-            color: white;
+        
+        .status-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
-        .tab-content {
+        
+        .ai-status-note {
+            font-size: 13px;
+            color: #666;
+            margin-top: 4px;
+        }
+        
+        .ai-warning {
+            background-color: var(--warning-bg);
+            border: 1px solid #ffe58f;
+            border-radius: 4px;
+            padding: 8px 12px;
+            margin: 8px 0 0;
             display: none;
-            padding: 20px;
-            border: 1px solid #ddd;
-            border-top: none;
         }
-        .tab-content.active {
-            display: block;
+        
+        .code-block {
+            margin-bottom: 20px;
+            padding: 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: #fafafa;
         }
+        
         textarea {
             width: 100%;
             height: 200px;
             margin-bottom: 10px;
             font-family: monospace;
             resize: vertical;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 14px;
+            transition: border-color 0.3s;
         }
-        .code-block {
-            margin-bottom: 20px;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
+        
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
         }
+        
         .result-container {
             margin-top: 20px;
             max-height: 400px;
             overflow-y: auto;
-            padding: 10px;
-            border: 1px solid #ddd;
-            white-space: pre-wrap;
+            padding: 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: #ffffff;
+            line-height: 1.5;
         }
+        
         .plagiarism-high {
-            background-color: #ffdddd;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 10px;
+            background-color: #fff2f2;
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 12px;
+            border-left: 4px solid #f5222d;
         }
+        
         .plagiarism-medium {
-            background-color: #ffffcc;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 10px;
+            background-color: #fffbe6;
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 12px;
+            border-left: 4px solid #faad14;
         }
+        
         .plagiarism-low {
-            background-color: #ddffdd;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 10px;
+            background-color: #f6ffed;
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 12px;
+            border-left: 4px solid #52c41a;
         }
+        
         .ai-analysis {
-            background-color: #e6f7ff;
-            border-left: 4px solid #1890ff;
-            padding: 10px;
+            background-color: var(--info-bg);
+            border-left: 4px solid var(--primary-color);
+            padding: 12px;
             margin-top: 10px;
-            border-radius: 0 5px 5px 0;
+            border-radius: 0 4px 4px 0;
         }
+        
         .loading-container {
             text-align: center;
             padding: 20px;
         }
+        
         .loading-spinner {
             border: 4px solid #f3f3f3;
-            border-top: 4px solid #4CAF50;
+            border-top: 4px solid var(--primary-color);
             border-radius: 50%;
             width: 40px;
             height: 40px;
@@ -107,145 +229,242 @@
             50% { opacity: 1; }
             100% { opacity: 0.6; }
         }
+        
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        
         .controls {
-            margin: 10px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin: 16px 0;
+            align-items: center;
         }
-        .language-select {
-            margin-right: 10px;
+        
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        label {
+            font-weight: 500;
+            color: #595959;
+        }
+        
+        input[type="number"], 
+        select {
+            padding: 6px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background-color: white;
+            font-size: 14px;
+        }
+        
+        input[type="text"] {
+            width: 100%;
+            padding: 8px 12px;
+            margin: 4px 0;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 16px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-weight: 500;
+        }
+        
+        button:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+        
+        button:active {
+            background-color: var(--primary-active);
+            transform: translateY(0);
+            color: #e6f7ff; /* 按钮按下时文字显示蓝色 */
+        }
+        
+        button.secondary {
+            background-color: #f0f0f0;
+            color: #595959;
+        }
+        
+        button.secondary:hover {
+            background-color: #e8e8e8;
+        }
+        
+        button.secondary:active {
+            background-color: #d9d9d9;
+            color: #1890ff; /* 按钮按下时文字显示蓝色 */
+        }
+        
+        h2, h3 {
+            color: #262626;
+            margin: 16px 0 12px;
+            font-weight: 600;
+        }
+        
+        h3 {
+            font-size: 18px;
+        }
+        
+        p {
+            margin: 8px 0;
+        }
+        
+        strong {
+            font-weight: 600;
         }
     </style>
 </head>
 <body>
-    <h1>AI助手</h1>
-    
-    <!-- 标签页切换 -->
-    <div class="tab-container">
-        <button class="tab-button active" onclick="switchTab('chat')">聊天对话</button>
-        <button class="tab-button" onclick="switchTab('plagiarism')">代码查重</button>
-    </div>
-    
-    <!-- 聊天界面 -->
-    <div id="chat" class="tab-content active">
-        <h2>通义千问对话测试</h2>
-        <input type="text" id="userInput" placeholder="输入你的问题..." style="width: 300px;">
-        <button onclick="sendText()">发送（同步）</button>
-        <button onclick="sendStream()">发送（流式）</button>
-        <div id="response" class="result-container"></div>
-    </div>
-    
-    <!-- 代码查重界面 -->
-    <div id="plagiarism" class="tab-content">
-        <h2>OJ代码查重</h2>
+    <div class="container">
+        <header>
+            <h1>AI代码查重系统</h1>
+            <p class="subtitle">智能检测代码相似度，识别抄袭行为，提供深度分析与改进建议</p>
+        </header>
         
-        <div class="controls">
-            <label for="threshold">查重阈值 (0-1): </label>
-            <input type="number" id="threshold" min="0" max="1" step="0.05" value="0.7">
-            <button onclick="addCodeBlock()">添加代码块</button>
-            <button onclick="compareCodeBlocks()">执行查重</button>
-            <button onclick="clearAllCodeBlocks()">清空全部</button>
-        </div>
-        
-        <div id="codeBlocksContainer">
-            <!-- 默认的两个代码块 -->
-            <div class="code-block">
-                <input type="text" placeholder="代码标题" class="code-title" value="代码块 1">
-                <input type="text" placeholder="作者" class="code-author" value="未知作者">
-                <select class="language-select">
-                    <option value="Java">Java</option>
-                    <option value="Python">Python</option>
-                    <option value="C++">C++</option>
-                    <option value="JavaScript">JavaScript</option>
-                    <option value="C">C</option>
-                    <option value="C#">C#</option>
-                </select>
-                <textarea placeholder="在这里粘贴代码..." class="code-content"></textarea>
+        <div class="status-bar">
+            <div class="status-header">
+                <div class="status-info">
+                    <span>AI智能体状态: </span>
+                    <span id="aiStatus" class="ai-status disconnected">未连接</span>
+                </div>
+                <div class="ai-status-note">注意：当相似度超过阈值时，AI深度分析会自动触发</div>
             </div>
-            
-            <div class="code-block">
-                <input type="text" placeholder="代码标题" class="code-title" value="代码块 2">
-                <input type="text" placeholder="作者" class="code-author" value="未知作者">
-                <select class="language-select">
-                    <option value="Java">Java</option>
-                    <option value="Python">Python</option>
-                    <option value="C++">C++</option>
-                    <option value="JavaScript">JavaScript</option>
-                    <option value="C">C</option>
-                    <option value="C#">C#</option>
-                </select>
-                <textarea placeholder="在这里粘贴代码..." class="code-content"></textarea>
+            <div id="aiWarning" class="ai-warning">
+                AI智能体未连接，系统将仅使用本地查重功能，结果可能不够全面。
             </div>
         </div>
         
-        <h3>查重结果</h3>
-        <div id="plagiarismResult" class="result-container"></div>
+        <div class="card">
+            <!-- 代码查重界面 -->
+            <div id="plagiarism" class="tab-content active">
+                <h2>OJ代码查重</h2>
+                
+                <div class="controls">
+                    <div class="control-group">
+                        <label for="threshold">查重阈值 (0-1): </label>
+                        <input type="number" id="threshold" min="0" max="1" step="0.05" value="0.7">
+                    </div>
+                    <button class="secondary" onclick="addCodeBlock()">添加代码块</button>
+                    <button id="compareButton" onclick="compareCodeBlocks()">执行查重</button>
+                    <button class="secondary" onclick="clearAllCodeBlocks()">清空全部</button>
+                </div>
+                
+                <div id="codeBlocksContainer">
+                    <!-- 默认的两个代码块 -->
+                    <div class="code-block">
+                        <input type="text" placeholder="代码标题" class="code-title" value="代码块 1">
+                        <input type="text" placeholder="作者" class="code-author" value="未知作者">
+                        <div class="control-group">
+                            <select class="language-select">
+                                <option value="Java">Java</option>
+                                <option value="Python">Python</option>
+                                <option value="C++">C++</option>
+                                <option value="JavaScript">JavaScript</option>
+                                <option value="C">C</option>
+                                <option value="C#">C#</option>
+                            </select>
+                            <button class="secondary" onclick="removeCodeBlock(this)">删除</button>
+                        </div>
+                        <textarea placeholder="在这里粘贴代码..." class="code-content"></textarea>
+                    </div>
+                    
+                    <div class="code-block">
+                        <input type="text" placeholder="代码标题" class="code-title" value="代码块 2">
+                        <input type="text" placeholder="作者" class="code-author" value="未知作者">
+                        <div class="control-group">
+                            <select class="language-select">
+                                <option value="Java">Java</option>
+                                <option value="Python">Python</option>
+                                <option value="C++">C++</option>
+                                <option value="JavaScript">JavaScript</option>
+                                <option value="C">C</option>
+                                <option value="C#">C#</option>
+                            </select>
+                            <button class="secondary" onclick="removeCodeBlock(this)">删除</button>
+                        </div>
+                        <textarea placeholder="在这里粘贴代码..." class="code-content"></textarea>
+                    </div>
+                </div>
+                
+                <h3>查重结果</h3>
+                <div id="plagiarismResult" class="result-container"></div>
+            </div>
+        </div>
     </div>
 
 <script>
-    // 标签页切换函数
-    function switchTab(tabName) {
-        // 隐藏所有内容
-        const tabContents = document.getElementsByClassName('tab-content');
-        for (let i = 0; i < tabContents.length; i++) {
-            tabContents[i].classList.remove('active');
+    let isAIConnected = false;
+    
+    // 页面加载时检查AI连接状态
+    document.addEventListener('DOMContentLoaded', function() {
+        checkAIConnection();
+    });
+    
+    // 检查AI连接状态
+    async function checkAIConnection() {
+        try {
+            // 尝试访问聊天接口进行测试
+            const response = await fetch('/api/v1/chat/text', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    message: "测试AI连接",
+                    systemPrompt: "仅用于测试连接，不需要实际响应"
+                }),
+                timeout: 5000
+            });
+            
+            isAIConnected = response.ok;
+            
+            // 更新UI状态
+            updateAIStatus();
+        } catch (error) {
+            console.log('AI连接测试失败:', error);
+            isAIConnected = false;
+            updateAIStatus();
         }
-        
-        // 移除所有按钮的活动状态
-        const tabButtons = document.getElementsByClassName('tab-button');
-        for (let i = 0; i < tabButtons.length; i++) {
-            tabButtons[i].classList.remove('active');
-        }
-        
-        // 显示选中的内容和按钮
-        document.getElementById(tabName).classList.add('active');
-        event.currentTarget.classList.add('active');
     }
     
-    // 聊天相关函数
-    async function sendText() {
-        const msg = document.getElementById('userInput').value;
-        const res = await fetch('/api/v1/chat/text', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: msg })
-        });
-        const text = await res.text();
-        document.getElementById('response').innerText = text;
-    }
-
-    async function sendStream() {
-        const msg = document.getElementById('userInput').value;
-        document.getElementById('response').innerText = '';
+    // 更新AI状态UI
+    function updateAIStatus() {
+        const statusElement = document.getElementById('aiStatus');
+        const warningElement = document.getElementById('aiWarning');
+        const compareButton = document.getElementById('compareButton');
         
-        const res = await fetch('/api/v1/chat/stream', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: msg })
-        });
-        
-        if (!res.ok) {
-            document.getElementById('response').innerText = `Error: ${res.statusText}`;
+        // 确保元素存在再操作
+        if (!statusElement || !warningElement || !compareButton) {
+            console.error('UI elements not found. Retrying after 100ms...');
+            setTimeout(updateAIStatus, 100);
             return;
         }
         
-        const reader = res.body.getReader();
-        const decoder = new TextDecoder();
-        let done, value;
-        
-        while (!done) {
-            ({ done, value } = await reader.read());
-            
-            if (value) {
-                const chunk = decoder.decode(value, { stream: true });
-                const dataMatch = chunk.match(/data:([\s\S]*?)(?:\n\n|$)/);
-                if (dataMatch && dataMatch[1]) {
-                    const currentText = document.getElementById('response').innerText;
-                    document.getElementById('response').innerText = currentText + dataMatch[1].trim();
-                }
-            }
+        if (isAIConnected) {
+            statusElement.textContent = '已连接';
+            statusElement.className = 'ai-status connected';
+            warningElement.style.display = 'none';
+            compareButton.textContent = '执行查重 (AI增强版)';
+        } else {
+            statusElement.textContent = '未连接';
+            statusElement.className = 'ai-status disconnected';
+            warningElement.style.display = 'block';
+            compareButton.textContent = '执行查重 (本地版)';
         }
     }
     
@@ -259,15 +478,17 @@
         codeBlock.innerHTML = `
             <input type="text" placeholder="代码标题" class="code-title" value="代码块 ${blockCount}">
             <input type="text" placeholder="作者" class="code-author" value="未知作者">
-            <select class="language-select">
-                <option value="Java">Java</option>
-                <option value="Python">Python</option>
-                <option value="C++">C++</option>
-                <option value="JavaScript">JavaScript</option>
-                <option value="C">C</option>
-                <option value="C#">C#</option>
-            </select>
-            <button onclick="removeCodeBlock(this)">删除</button>
+            <div class="control-group">
+                <select class="language-select">
+                    <option value="Java">Java</option>
+                    <option value="Python">Python</option>
+                    <option value="C++">C++</option>
+                    <option value="JavaScript">JavaScript</option>
+                    <option value="C">C</option>
+                    <option value="C#">C#</option>
+                </select>
+                <button class="secondary" onclick="removeCodeBlock(this)">删除</button>
+            </div>
             <textarea placeholder="在这里粘贴代码..." class="code-content"></textarea>
         `;
         
@@ -337,8 +558,8 @@
         resultContainer.innerHTML = `
             <div class="loading-container">
                 <div class="loading-spinner"></div>
-                <p>正在分析代码相似度（阈值: ${threshold}）...</p>
-                <p class="ai-hint">当相似度超过阈值时，将自动调用千问AI进行深度分析</p>
+                <p>${isAIConnected ? '正在分析代码相似度（AI增强版）...' : '正在分析代码相似度（本地版）...'} (阈值: ${threshold})</p>
+                ${isAIConnected ? '<p class="ai-hint">当相似度超过阈值时，将自动调用千问AI进行深度分析</p>' : ''}
             </div>
         `;
         
@@ -347,8 +568,13 @@
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 60000); // 60秒超时
             
-            // 发送请求到AI增强分析端点
-            const response = await fetch('/api/plagiarism/analysis/batch', {
+            // 根据AI连接状态选择不同的API
+            const apiUrl = isAIConnected ? 
+                '/api/plagiarism/analysis/batch' : 
+                '/api/v1/plagiarism/compare/batch';
+                
+            // 发送请求到相应的查重端点
+            const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -364,72 +590,86 @@
                 throw new Error(`请求失败: ${response.statusText}`);
             }
             
-            // 检查是否需要AI分析（可能需要更长时间处理）
-            // 这里更新加载状态，提示用户正在进行AI分析
             const responseText = await response.text();
-            const result = JSON.parse(responseText);
+            let result;
+            
+            try {
+                result = JSON.parse(responseText);
+            } catch (e) {
+                throw new Error('服务器返回无效的JSON数据');
+            }
             
             // 显示结果
-            displayPlagiarismResults(result);
+            displayPlagiarismResults(result, isAIConnected, threshold);
         } catch (error) {
             if (error.name === 'AbortError') {
-                resultContainer.innerHTML = `<p style="color: red;">错误：分析超时，请检查代码复杂度或减少代码块数量</p>`;
+                resultContainer.innerHTML = `<p style="color: #f5222d;">错误：分析超时，请检查代码复杂度或减少代码块数量</p>`;
             } else {
-                resultContainer.innerHTML = `<p style="color: red;">错误：${error.message}</p>`;
+                resultContainer.innerHTML = `<p style="color: #f5222d;">错误：${error.message}</p>`;
             }
             console.error('代码查重请求失败:', error);
         }
     }
     
-    function displayPlagiarismResults(result) {
+    function displayPlagiarismResults(result, isAIConnected, threshold) {
         const resultContainer = document.getElementById('plagiarismResult');
         
-        // 从PlagiarismAnalysisController返回的数据结构适配
-        const adaptedResult = {
-            totalPairs: result.baseResult ? result.baseResult.totalPairs : 0,
-            plagiarismPairs: result.baseResult ? result.baseResult.plagiarismPairs : 0,
-            maxSimilarityScore: result.baseResult ? result.baseResult.maxSimilarityScore : 0,
-            avgSimilarityScore: result.baseResult ? result.baseResult.avgSimilarityScore : 0,
-            threshold: result.baseResult ? result.baseResult.threshold : 0,
-            processingTimeMs: result.baseResult ? result.baseResult.processingTimeMs : 0,
-            statistics: result.baseResult ? result.baseResult.statistics : null,
-            results: result.baseResult ? result.baseResult.results : [],
-            batchSummary: result.batchSummary || result.aiSummary || null
-        };
+        // 从结果中提取基本数据
+        const baseResult = result.baseResult || result;
         
-        const hasAIEnhancement = adaptedResult.batchSummary && adaptedResult.batchSummary.includes('【AI深度分析】');
+        // 修复：正确判断是否应该触发AI分析
+        const shouldTriggerAI = baseResult.maxSimilarityScore >= threshold;
+        
+        // 修复：更准确的AI分析结果检测逻辑
+        const hasBatchSummary = result.batchSummary && result.batchSummary.trim() !== '';
+        const hasAnyAnalysis = baseResult.results && baseResult.results.some(r => r.analysis && r.analysis.trim() !== '');
+        const hasAIEnhancement = hasBatchSummary || hasAnyAnalysis;
         
         // 检查是否有结果
-        if (!adaptedResult.results || adaptedResult.results.length === 0) {
+        if (!baseResult.results || baseResult.results.length === 0) {
             resultContainer.innerHTML = '<p>没有找到可以比较的代码块组合</p>';
             return;
         }
         
         // 显示统计信息
         let html = `
-            <div style="margin-bottom: 20px; padding: 10px; background-color: #f0f0f0; border-radius: 5px;">
-                <h3>查重统计</h3>
-                <p>共比较 <strong>${adaptedResult.totalPairs}</strong> 对代码块</p>
-                <p>发现 <strong>${adaptedResult.plagiarismPairs}</strong> 对疑似抄袭</p>
-                <p>最大相似度: <strong>${adaptedResult.maxSimilarityScore.toFixed(2)}</strong></p>
-                <p>平均相似度: <strong>${adaptedResult.avgSimilarityScore.toFixed(2)}</strong></p>
-                <p>阈值设置: <strong>${adaptedResult.threshold.toFixed(2)}</strong></p>
-                <p>处理时间: <strong>${adaptedResult.processingTimeMs}ms</strong></p>
-                ${hasAIEnhancement ? '<div style="color: #1890ff; font-weight: bold;">✅ AI深度分析已执行</div>' : ''}
-            </div>
-            <h3>详细对比结果</h3>
+            <div style="margin-bottom: 20px; padding: 10px; background-color: #f0f0f0; border-radius: 4px;">
+                <h3 style="margin-top: 0;">查重统计</h3>
+                <p>共比较 <strong>${baseResult.totalPairs}</strong> 对代码块</p>
+                <p>发现 <strong>${baseResult.plagiarismPairs}</strong> 对疑似抄袭</p>
+                <p>最大相似度: <strong>${baseResult.maxSimilarityScore.toFixed(2)}</strong></p>
+                <p>平均相似度: <strong>${baseResult.avgSimilarityScore.toFixed(2)}</strong></p>
+                <p>阈值设置: <strong>${baseResult.threshold.toFixed(2)}</strong></p>
+                <p>处理时间: <strong>${baseResult.processingTimeMs}ms</strong></p>
         `;
         
+        // 修复：当相似度超过阈值且有AI分析结果时，显示正确状态
+        if (isAIConnected) {
+            if (shouldTriggerAI) {
+                if (hasAIEnhancement) {
+                    html += '<div class="ai-triggered" style="color: #52c41a; font-weight: bold;">✅ AI深度分析已成功执行并返回结果</div>';
+                } else {
+                    html += '<div style="color: #faad14; font-weight: bold;">⚠️ AI分析请求已发送，但未收到分析结果（可能因网络问题或API限制）</div>';
+                }
+            } else {
+                html += '<div style="color: #8c8c8c; font-weight: normal;">ℹ️ 未触发AI深度分析（相似度低于阈值）</div>';
+            }
+        } else {
+            html += '<div style="color: #f5222d; font-weight: bold;">⚠️ 本地查重模式 - 结果可能不够全面</div>';
+        }
+        
+        html += `</div><h3 style="margin-top: 0;">详细对比结果</h3>`;
+        
         // 显示批量总结（如果有）
-        if (adaptedResult.batchSummary) {
-            html += `<div style="background-color: #e6f7ff; padding: 10px; border-left: 4px solid #1890ff; border-radius: 0 5px 5px 0; margin-bottom: 20px;">
+        if (hasBatchSummary) {
+            html += `<div class="ai-analysis">
                         <h4>【AI深度分析】批量分析总结</h4>
-                        <p>${adaptedResult.batchSummary}</p>
+                        <p>${result.batchSummary}</p>
                     </div>`;
         }
         
         // 显示每对代码块的比较结果
-        adaptedResult.results.forEach((pairResult, index) => {
+        baseResult.results.forEach((pairResult, index) => {
             const isPlagiarism = pairResult.plagiarism || pairResult.isPlagiarism;
             let cssClass;
             if (pairResult.similarityScore >= 0.8) {
@@ -440,18 +680,29 @@
                 cssClass = 'plagiarism-low';
             }
             
+            // 修复：为每个结果项添加更准确的AI状态
+            let aiStatusHTML = '';
+            if (isAIConnected && pairResult.similarityScore >= threshold) {
+                if (pairResult.analysis && pairResult.analysis.trim() !== '') {
+                    aiStatusHTML = '<div class="ai-analysis"><strong>✓ AI深度分析已成功执行</strong></div>';
+                } else if (hasAIEnhancement) {
+                    // 如果整体有AI分析但这个特定对没有，可能是批量分析覆盖了
+                    aiStatusHTML = '<div class="ai-analysis"><strong>✓ AI深度分析结果已包含在批量总结中</strong></div>';
+                } else {
+                    aiStatusHTML = '<div class="ai-analysis" style="color: #faad14;"><strong>⚠️ AI分析请求已发送，但未收到此对结果</strong></div>';
+                }
+            }
+            
             html += `
                 <div class="${cssClass}">
-                    <h4>对比 ${index + 1}: ${pairResult.block1Title || pairResult.title1 || '代码块 A'} vs ${pairResult.block2Title || pairResult.title2 || '代码块 B'}</h4>
+                    <h4 style="margin-top: 0;">对比 ${index + 1}: ${pairResult.block1Title || pairResult.title1 || '代码块 A'} vs ${pairResult.block2Title || pairResult.title2 || '代码块 B'}</h4>
                     <p><strong>作者:</strong> ${pairResult.block1Author || pairResult.author1 || '未知作者'} vs ${pairResult.block2Author || pairResult.author2 || '未知作者'}</p>
                     <p><strong>相似度得分:</strong> ${(pairResult.similarityScore * 100).toFixed(1)}%</p>
                     <p><strong>判断:</strong> ${isPlagiarism ? '疑似抄袭' : '未检测到抄袭'}</p>
                     ${pairResult.analysis ? `
                         <p><strong>分析:</strong> ${pairResult.analysis.replace(/\n/g, '<br>')}</p>
-                        ${pairResult.analysis.includes('【AI深度分析】') ? 
-                            '<div class="ai-analysis"><strong>✓ AI深度分析已执行</strong></div>' : 
-                            ''}
-                    ` : ''}
+                        ${aiStatusHTML}
+                    ` : aiStatusHTML}
                 </div>
             `;
         });
