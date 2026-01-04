@@ -1,0 +1,68 @@
+{
+  "groups": [
+    {
+      "name": "dashscope",
+      "type": "org.MyAI.Agent.config.DashScopeConfig",
+      "sourceType": "org.MyAI.Agent.config.DashScopeConfig"
+    },
+    {
+      "name": "dashscope.api",
+      "type": "org.MyAI.Agent.config.DashScopeConfig$Api",
+      "sourceType": "org.MyAI.Agent.config.DashScopeConfig"
+    },
+    {
+      "name": "ai",
+      "type": "org.MyAI.Agent.config.AIPromptConfig",
+      "sourceType": "org.MyAI.Agent.config.AIPromptConfig"
+    },
+    {
+      "name": "ai.prompts",
+      "type": "org.MyAI.Agent.config.AIPromptConfig$Prompts",
+      "sourceType": "org.MyAI.Agent.config.AIPromptConfig"
+    },
+    {
+      "name": "ai.prompts.plagiarism",
+      "type": "org.MyAI.Agent.config.AIPromptConfig$Plagiarism",
+      "sourceType": "org.MyAI.Agent.config.AIPromptConfig$Prompts"
+    }
+  ],
+  "properties": [
+    {
+      "name": "dashscope.api.key",
+      "type": "java.lang.String",
+      "sourceType": "org.MyAI.Agent.config.DashScopeConfig$Api",
+      "description": "DashScope API密钥"
+    },
+    {
+      "name": "dashscope.model",
+      "type": "java.lang.String",
+      "sourceType": "org.MyAI.Agent.config.DashScopeConfig",
+      "description": "使用的模型名称"
+    },
+    {
+      "name": "dashscope.stream-enabled",
+      "type": "java.lang.Boolean",
+      "sourceType": "org.MyAI.Agent.config.DashScopeConfig",
+      "description": "是否启用流式输出"
+    },
+    {
+      "name": "dashscope.temperature",
+      "type": "java.lang.Double",
+      "sourceType": "org.MyAI.Agent.config.DashScopeConfig",
+      "description": "生成文本的随机性参数"
+    },
+    {
+      "name": "dashscope.top-p",
+      "type": "java.lang.Double",
+      "sourceType": "org.MyAI.Agent.config.DashScopeConfig",
+      "description": "生成文本的采样参数"
+    },
+    {
+      "name": "ai.prompts.plagiarism.assistant",
+      "type": "java.lang.String",
+      "sourceType": "org.MyAI.Agent.config.AIPromptConfig$Plagiarism",
+      "description": "代码查重助手提示词"
+    }
+  ],
+  "hints": []
+}
