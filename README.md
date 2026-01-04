@@ -1,8 +1,22 @@
 # 千问AI代码查重系统(OJ Code Duplicate Checking)
 
+## 更新日志
+
+### 版本 1.0_alpha3 (2026-01-04)
+
+**功能改进：**
+
+- 增强了QwenAgent的超时控制机制，防止长时间等待
+- 改进了异常处理和错误提示信息
+- 优化了API参数传递机制，支持从请求中获取API密钥和模型配置
+
 ## 项目简介
 
-千问AI代码查重系统结合了传统代码相似度检测和AI增强分析功能，能够有效识别各种抄袭手法，包括变量名修改、结构调整、代码片段重组等。系统通过通义千问API提供深度语义分析和改进建议，为代码评估提供全面支持。
+千问AI代码查重系统结合了传统代码相似度检测和AI增强分析功能，能够有效识别各种抄袭手法，包括变量名修改、结构调整、代码片段重组等。系统通过通义千问API提供深度语义分析和改进建议，为代码评估提供全面支持。该项目基于Hcode OJ平台专门开发查重系统，便于在此基础上进行集成。注意：该项目与原项目无任何联系，只是个人在此基础上添加了这个系统，以求完善防作弊机制
+
+尽管做的不是非常完善，希望大家能够指出其中的问题，我会在休闲之余尽快修复。
+
+请支持原作者的Hcode OJ项目，这是原项目的官网：[https://docs.hdoi.cn/](https://docs.hdoi.cn/)
 
 ## 技术栈
 
@@ -36,6 +50,11 @@
 3. **AI增强语义分析**：通过通义千问提供深度语义分析和教育性反馈
 4. **批量代码分析能力**：支持多文件批量对比分析
 5. **详细的分析报告和改进建议**：提供针对性的优化建议
+6. **灵活的API配置**：支持从请求中动态配置API密钥和模型类型
+7. **超时控制机制**：防止AI服务调用长时间阻塞，提高系统稳定性
+8. **完善的异常处理**：提供清晰的错误信息和恢复机制
+9. **连接检查接口**：支持验证AI服务连接状态
+10. **自定义阈值设置**：可根据需求调整抄袭判定的相似度阈值
 
 ## 快速开始
 
@@ -78,18 +97,12 @@ dashscope:
 3. 运行应用程序
 
    ```bash
-   java -jar target\codeDuplicateChecking-1.0_alpha1.jar
+   java -jar target/codeDuplicateChecking-1.0_alpha2.jar
    ```
 
 ### 注意
 
 > 项目暂不包含自动化打包脚本，推荐使用Maven直接打包。
-
-3. 运行应用程序
-
-   ```bash
-   java -jar target\codeDuplicateChecking-1.0_alpha1.jar
-   ```
 
 运行成功后，应用将在`http://localhost:8080`上提供服务。
 
@@ -247,8 +260,10 @@ docker rm oj-code-duplicate-container
   "codeBlocks": [ /* 多个代码块 */ ],
   "threshold": 0.7
 }
+```
 
-**注意**: 
+**注意**:
+
 - 代码块数组至少需要包含2个代码块，否则会返回400错误
 - 系统会自动进行参数验证并提供详细的错误信息
 - 接口实现了完善的异常处理机制，确保稳定性
@@ -295,7 +310,9 @@ docker rm oj-code-duplicate-container
 {
   "codeBlock1": { /* 第一段代码块 */ },
   "codeBlock2": { /* 第二段代码块 */ },
-  "threshold": 0.75
+  "threshold": 0.75,
+  "apiKey": "可选的API密钥",
+  "model": "可选的模型名称（如qwen-plus）"
 }
 ```
 
@@ -308,7 +325,9 @@ docker rm oj-code-duplicate-container
 ```json
 {
   "codeBlocks": [ /* 多个代码块 */ ],
-  "threshold": 0.75
+  "threshold": 0.75,
+  "apiKey": "可选的API密钥",
+  "model": "可选的模型名称（如qwen-plus）"
 }
 ```
 
@@ -321,7 +340,9 @@ docker rm oj-code-duplicate-container
 ```json
 {
   "originalCode": { /* 原始代码块 */ },
-  "suspiciousCode": { /* 可疑代码块 */ }
+  "suspiciousCode": { /* 可疑代码块 */ },
+  "apiKey": "可选的API密钥",
+  "model": "可选的模型名称（如qwen-plus）"
 }
 ```
 
@@ -350,6 +371,30 @@ docker rm oj-code-duplicate-container
 {
   "message": "你的问题或指令",
   "systemPrompt": "可选的系统提示词"
+}
+```
+
+### 4. AI服务连接检查接口
+
+#### 4.1 AI连接状态检查
+
+**URL**: `/api/plagiarism/analysis/check-connection`
+**方法**: `POST`
+**请求体**:
+
+```json
+{
+  "apiKey": "你的API密钥",
+  "model": "使用的模型名称（如qwen-plus）"
+}
+```
+
+**响应**:
+
+```json
+{
+  "connected": true/false,
+  "message": "连接状态描述"
 }
 ```
 
@@ -384,7 +429,7 @@ docker rm oj-code-duplicate-container
 - **0.3-0.5**：低度相似，可能有共同的实现思路
 - **0.3以下**：极低相似度，基本可以确定为独立实现
 
-## 注意事项
+## 使用时的注意事项
 
 1. 代码查重结果仅供参考，建议重要场景下进行人工复核
 2. 对于短代码或常见算法实现，可能会出现较高的相似度
@@ -408,3 +453,8 @@ furnished to do so, subject to the following conditions:
 
 The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
