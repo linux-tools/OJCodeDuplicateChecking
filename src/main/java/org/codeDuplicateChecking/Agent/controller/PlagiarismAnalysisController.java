@@ -70,16 +70,16 @@ public class PlagiarismAnalysisController {
             // 检查连接
             boolean connected = agent.checkConnection();
             response.put("connected", connected);
-            response.put("message", connected ? "AI助手连接成功" : "AI助手连接失败");
+            response.put("message", connected ? "千问AI助手连接成功" : "千问AI助手连接失败");
             
             return ResponseEntity.ok(response);
         } catch (TimeoutException e) {
             response.put("connected", false);
-            response.put("message", "AI助手连接超时");
+            response.put("message", "千问AI助手连接超时");
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             response.put("connected", false);
-            response.put("message", "AI助手连接失败: " + e.getMessage());
+            response.put("message", "千问AI助手连接失败: " + e.getMessage());
             return ResponseEntity.ok(response);
         }
     }
@@ -172,7 +172,7 @@ public class PlagiarismAnalysisController {
                 // 实际应用中可能需要更复杂的处理或专门的AI提示来获取改进建议
                 improvementText += extractImprovementSuggestions(analysis.getAIEnhancedAnalysis());
             } else {
-                improvementText += "系统无法获取AI增强的改进建议，请稍后再试。";
+                improvementText += "系统无法获取千问AI增强的改进建议，请稍后再试。";
             }
             
             Map<String, String> response = new HashMap<>();
