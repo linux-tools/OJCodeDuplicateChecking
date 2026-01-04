@@ -1,15 +1,19 @@
 package org.codeDuplicateChecking.Agent.controller;
 
+import org.codeDuplicateChecking.Agent.QwenAgent;
+import org.codeDuplicateChecking.Agent.config.AIPromptConfig;
 import org.codeDuplicateChecking.Agent.model.ImprovementRequest;
 import org.codeDuplicateChecking.Agent.model.SinglePlagiarismRequest;
 import org.codeDuplicateChecking.Agent.model.BatchPlagiarismRequest;
 import org.codeDuplicateChecking.Agent.service.PlagiarismAnalysisService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeoutException;
 
 /**
  * 代码查重智能分析控制器
@@ -21,7 +25,65 @@ public class PlagiarismAnalysisController {
 
     @Autowired
     private PlagiarismAnalysisService analysisService;
+    
+    /**
+     * 通义千问API密钥
+     */
+    @Value("${dashscope.api.key:}")
+    private String qwenApiKey;
+    
+    /**
+     * AI模型类型
+     */
+    @Value("${dashscope.model:qwen-plus}")
+    private String qwenModel;
+    
+    /**
+     * AI提示词配置
+     */
+    @Autowired
+    private AIPromptConfig aiPromptConfig;
 
+    /**
+     * 检查AI连接状态
+     */
+    @PostMapping("/check-connection")
+    public ResponseEntity<Map<String, Object>> checkConnection(@RequestBody ConnectionCheckRequest request) {
+        String apiKey = request.getApiKey();
+        String model = request.getModel();
+        
+        // 如果未提供API Key或模型，使用默认值
+        if (apiKey == null || apiKey.isEmpty()) {
+            apiKey = qwenApiKey;
+        }
+        if (model == null || model.isEmpty()) {
+            model = qwenModel;
+        }
+        
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            // 使用配置类中的提示词
+            String assistantPrompt = aiPromptConfig.getPrompts().getPlagiarism().getAssistant();
+            QwenAgent agent = new QwenAgent(apiKey, model, assistantPrompt);
+            
+            // 检查连接
+            boolean connected = agent.checkConnection();
+            response.put("connected", connected);
+            response.put("message", connected ? "AI助手连接成功" : "AI助手连接失败");
+            
+            return ResponseEntity.ok(response);
+        } catch (TimeoutException e) {
+            response.put("connected", false);
+            response.put("message", "AI助手连接超时");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("connected", false);
+            response.put("message", "AI助手连接失败: " + e.getMessage());
+            return ResponseEntity.ok(response);
+        }
+    }
+    
     /**
      * 分析两段代码的相似度并提供AI增强分析
      */
@@ -42,7 +104,9 @@ public class PlagiarismAnalysisController {
             analysisService.getSmartPlagiarismAnalysis(
                 request.getCodeBlock1(), 
                 request.getCodeBlock2(), 
-                threshold);
+                threshold,
+                request.getApiKey(),
+                request.getModel());
                 
         // 确保分析结果不为空
         if (analysis == null) {
@@ -69,7 +133,11 @@ public class PlagiarismAnalysisController {
         
         // 执行批量智能分析
         PlagiarismAnalysisService.BatchPlagiarismAnalysis analysis = 
-            analysisService.getBatchSmartAnalysis(request.getCodeBlocks(), threshold);
+            analysisService.getBatchSmartAnalysis(
+                request.getCodeBlocks(), 
+                threshold,
+                request.getApiKey(),
+                request.getModel());
             
         // 确保分析结果不为空
         if (analysis == null) {
@@ -93,7 +161,9 @@ public class PlagiarismAnalysisController {
                 analysisService.getSmartPlagiarismAnalysis(
                     request.getOriginalCode(), 
                     request.getSuspiciousCode(), 
-                    0.5); // 使用较低阈值以获取更多可能的建议
+                    0.5, // 使用较低阈值以获取更多可能的建议
+                    request.getApiKey(),
+                    request.getModel());
                     
             // 从AI分析中提取改进建议
             String improvementText = "代码改进建议:\n\n";
@@ -127,12 +197,36 @@ public class PlagiarismAnalysisController {
         } else if (aiText.contains("建议")) {
             return aiText.substring(aiText.indexOf("建议"));
         } else {
-            return "\n基于当前分析，以下是一些一般性建议:\n"
-                  + "1. 重新思考算法实现方式\n"
-                  + "2. 使用不同的数据结构\n"
-                  + "3. 优化代码结构和命名\n"
-                  + "4. 添加适当的注释和文档\n"
-                  + "5. 实现自己独特的优化逻辑";
+            return "\n基于当前分析，以下是一些一般性建议:\n" +
+                  "1. 重新思考算法实现方式\n" +
+                  "2. 使用不同的数据结构\n" +
+                  "3. 优化代码结构和命名\n" +
+                  "4. 添加适当的注释和文档\n" +
+                  "5. 实现自己独特的优化逻辑";
+        }
+    }
+    
+    /**
+     * AI连接检查请求类
+     */
+    public static class ConnectionCheckRequest {
+        private String apiKey;
+        private String model;
+        
+        public String getApiKey() {
+            return apiKey;
+        }
+        
+        public void setApiKey(String apiKey) {
+            this.apiKey = apiKey;
+        }
+        
+        public String getModel() {
+            return model;
+        }
+        
+        public void setModel(String model) {
+            this.model = model;
         }
     }
 }

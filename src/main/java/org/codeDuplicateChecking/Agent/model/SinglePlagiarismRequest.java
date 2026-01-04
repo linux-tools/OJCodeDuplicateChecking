@@ -19,4 +19,10 @@ public class SinglePlagiarismRequest {
     
     // 查重阈值，范围[0,1]
     private double threshold = 0.75; // 默认阈值为0.75
+    
+    // AI API密钥
+    private String apiKey;
+    
+    // AI模型类型
+    private String model;
 }
