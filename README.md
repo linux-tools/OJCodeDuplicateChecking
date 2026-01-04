@@ -1,4 +1,4 @@
-# 千问AI代码查重系统
+# 千问AI代码查重系统(OJ Code Duplicate Checking)
 
 ## 项目简介
 
