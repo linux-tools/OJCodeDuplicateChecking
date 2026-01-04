@@ -249,7 +249,7 @@ public class PlagiarismAnalysisService {
                 .average()
                 .orElse(0.0);
         
-        userPrompt.append("整体代码集合原始平均查重率: " + String.format("%.1f%%", averageSimilarity * 100));
+        userPrompt.append("整体代码集合原始平均查重率: " + String.format("%.1f%%", averageSimilarity * 100)+"\n\n"+"代码如下：\n"+allCodeBlocks.toString());
         
         // 调用千问API获取总结分析
         String aiResponse = agent.chat(userPrompt.toString());
