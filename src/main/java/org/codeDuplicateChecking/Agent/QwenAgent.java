@@ -75,8 +75,8 @@ public class QwenAgent {
 
         GenerationResult result;
         try {
-            // 设置10秒超时
-            result = future.get(10, TimeUnit.SECONDS);
+            // 设置30秒超时
+            result = future.get(30, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new RuntimeException("请求被中断", e);
