@@ -20,7 +20,7 @@ import java.util.concurrent.TimeoutException;
  * 提供API接口让用户能够使用千问增强的代码查重分析功能
  */
 @RestController
-@RequestMapping("/api/plagiarism/analysis")
+@RequestMapping("/api/v1/plagiarism/analysis")
 public class PlagiarismAnalysisController {
 
     @Autowired

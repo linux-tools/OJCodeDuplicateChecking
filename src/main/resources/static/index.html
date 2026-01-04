@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>AI代码查重系统</title>
+    <title>基于千问AI的代码查重系统</title>
     <style>
         :root {
             --bg-color: #f5f7fa;
@@ -334,8 +334,8 @@
 <body>
     <div class="container">
         <header>
-            <h1>AI代码查重系统</h1>
-            <p class="subtitle">智能检测代码相似度，识别抄袭行为，提供深度分析与改进建议</p>
+            <h1>基于千问AI的代码查重系统</h1>
+            <p class="subtitle">通过借助千问AI，智能检测代码相似度，识别抄袭行为，提供深度分析与改进建议</p>
         </header>
         
         <div class="status-bar">
@@ -359,9 +359,13 @@
                     <label for="aiModel">AI模型类型: </label>
                     <select id="aiModel" style="width: 100%; margin-top: 5px;">
                         <option value="qwen-plus">qwen-plus</option>
-                        <option value="qwen-turbo">qwen-turbo</option>
-                        <option value="qwen-max">qwen-max</option>
-                        <option value="qwen-7b-chat">qwen-7b-chat</option>
+                        <option value="qwen-plus-latest">qwen-plus-latest</option>
+                        <option value="qwen3-max">qwen3-max</option>
+                        <option value="qwen3-max-preview">qwen3-max-preview</option>
+                        <option value="qwen-flash">qwen-flash</option>
+                        <option value="qwq-plus">qwq-plus</option>
+                        <option value="qwq-plus-latest">qwq-plus-latest</option>
+                        <option value="qwen-long">qwen-long</option>
                     </select>
                 </div>
                 <div style="margin-bottom: 10px; width: 100%; max-width: 500px;">
@@ -389,40 +393,7 @@
                 </div>
                 
                 <div id="codeBlocksContainer">
-                    <!-- 默认的两个代码块 -->
-                    <div class="code-block">
-                        <input type="text" placeholder="代码标题" class="code-title" value="代码块 1">
-                        <input type="text" placeholder="作者" class="code-author" value="未知作者">
-                        <div class="control-group">
-                            <select class="language-select">
-                                <option value="Java">Java</option>
-                                <option value="Python">Python</option>
-                                <option value="C++">C++</option>
-                                <option value="JavaScript">JavaScript</option>
-                                <option value="C">C</option>
-                                <option value="C#">C#</option>
-                            </select>
-                            <button class="secondary" onclick="removeCodeBlock(this)">删除</button>
-                        </div>
-                        <textarea placeholder="在这里粘贴代码..." class="code-content"></textarea>
-                    </div>
-                    
-                    <div class="code-block">
-                        <input type="text" placeholder="代码标题" class="code-title" value="代码块 2">
-                        <input type="text" placeholder="作者" class="code-author" value="未知作者">
-                        <div class="control-group">
-                            <select class="language-select">
-                                <option value="Java">Java</option>
-                                <option value="Python">Python</option>
-                                <option value="C++">C++</option>
-                                <option value="JavaScript">JavaScript</option>
-                                <option value="C">C</option>
-                                <option value="C#">C#</option>
-                            </select>
-                            <button class="secondary" onclick="removeCodeBlock(this)">删除</button>
-                        </div>
-                        <textarea placeholder="在这里粘贴代码..." class="code-content"></textarea>
-                    </div>
+                    <!-- 代码块将通过JavaScript动态生成 -->
                 </div>
                 
                 <h3>查重结果</h3>
@@ -434,9 +405,12 @@
 <script>
     let isAIConnected = false;
     
-    // 页面加载时检查AI连接状态
+    // 页面加载时检查AI连接状态并初始化代码块
     document.addEventListener('DOMContentLoaded', function() {
         checkAIConnection();
+        // 动态生成两个默认代码块
+        addCodeBlock();
+        addCodeBlock();
     });
     
     // 检查AI连接状态
@@ -451,7 +425,7 @@
             const model = document.getElementById('aiModel').value;
             
             // 尝试访问AI连接检查接口
-            const response = await fetch('/api/plagiarism/analysis/check-connection', {
+            const response = await fetch('/api/v1/plagiarism/analysis/check-connection', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
@@ -620,8 +594,8 @@
             
             // 根据AI连接状态选择不同的API
             const apiUrl = isAIConnected ? 
-                '/api/plagiarism/analysis/batch' : 
-                '/api/v1/plagiarism/compare/batch';
+                '/api/v1/plagiarism/analysis/batch' : 
+                '/api/v1/plagiarism/analysis/batch';
                 
             // 准备请求体
             const requestBody = {
@@ -676,10 +650,10 @@
         // 从结果中提取基本数据
         const baseResult = result.baseResult || result;
         
-        // 修复：正确判断是否应该触发AI分析
+        // 正确判断是否应该触发AI分析
         const shouldTriggerAI = baseResult.maxSimilarityScore >= threshold;
         
-        // 修复：更准确的AI分析结果检测逻辑
+        // 更准确的AI分析结果检测逻辑
         const hasBatchSummary = result.batchSummary && result.batchSummary.trim() !== '';
         const hasAnyAnalysis = baseResult.results && baseResult.results.some(r => r.analysis && r.analysis.trim() !== '');
         const hasAIEnhancement = hasBatchSummary || hasAnyAnalysis;
@@ -739,7 +713,7 @@
                 cssClass = 'plagiarism-low';
             }
             
-            // 修复：为每个结果项添加更准确的AI状态
+            // 为每个结果项添加更准确的AI状态
             let aiStatusHTML = '';
             if (isAIConnected && pairResult.similarityScore >= threshold) {
                 if (pairResult.analysis && pairResult.analysis.trim() !== '') {
