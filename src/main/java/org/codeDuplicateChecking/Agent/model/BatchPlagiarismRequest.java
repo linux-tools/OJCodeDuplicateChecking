@@ -8,6 +8,8 @@ import java.util.List;
 public class BatchPlagiarismRequest {
     private List<CodeBlock> codeBlocks; // 代码块列表
     private Double threshold; // 抄袭检测阈值（可选）
+    private String apiKey; // AI API密钥
+    private String model; // AI模型类型
     
     // 默认构造函数
     public BatchPlagiarismRequest() {}
@@ -32,5 +34,21 @@ public class BatchPlagiarismRequest {
     
     public void setThreshold(Double threshold) {
         this.threshold = threshold;
+    }
+
+    public String getApiKey() {
+        return apiKey;
+    }
+
+    public void setApiKey(String apiKey) {
+        this.apiKey = apiKey;
+    }
+
+    public String getModel() {
+        return model;
+    }
+
+    public void setModel(String model) {
+        this.model = model;
     }
 }

@@ -1,8 +1,39 @@
 # 千问AI代码查重系统(OJ Code Duplicate Checking)
 
+## 项目展示
+
+总体界面
+![1](./img/example1.png)
+
+千问模型选择
+![2](./img/example2.png)
+
+批量查重结果展示
+![3](./img/example3.png)
+
+## 更新日志
+
+### 版本 1.0_alpha3 (2026-01-04)
+
+**功能改进：**
+
+- 增强了QwenAgent的超时控制机制，防止长时间等待
+- 改进了异常处理和错误提示信息
+- 优化了API参数传递机制，支持从请求中获取API密钥和模型配置
+- 接下来AI查重时不再仅仅直接参考初步查重结果，同时会参考选手代码做出更加合理的评价
+- 增加了对大模型API调用的超时处理，避免等待时间过短导致AI还未返回结果，系统直接抛出超时异常的问题
+
 ## 项目简介
 
-千问AI代码查重系统结合了传统代码相似度检测和AI增强分析功能，能够有效识别各种抄袭手法，包括变量名修改、结构调整、代码片段重组等。系统通过通义千问API提供深度语义分析和改进建议，为代码评估提供全面支持。
+千问AI代码查重系统结合了传统代码相似度检测和AI增强分析功能，能够有效识别各种抄袭手法，包括变量名修改、结构调整、代码片段重组等。系统通过通义千问API提供深度语义分析和改进建议，为代码评估提供全面支持。该项目基于Hcode OJ平台专门开发查重系统，便于在此基础上进行集成。注意：该项目与原项目无任何联系，只是个人在此基础上添加了这个系统，以求完善防作弊机制
+
+尽管做的不是非常完善，希望大家能够指出其中的问题，我会在休闲之余尽快修复。
+
+后期会考虑使用SpringBoot 3新版本对查重系统进行重构，同时个人也会尝试对Hcode OJ项目使用新版本的Spring Boot框架以及其他新版本框架进行升级。
+
+请支持原作者的Hcode OJ项目，这是原项目的官网：[HOJ官方文档](https://docs.hdoi.cn/)
+
+关于千问模型的种类和价格，请访问[阿里云百炼相关服务](https://bailian.console.aliyun.com/?spm=5176.29597918.J_SEsSjsNv72yRuRFS2VknO.2.15dd7b08MPUkTh&tab=doc#/doc/?type=model&url=2840914)
 
 ## 技术栈
 
@@ -36,14 +67,19 @@
 3. **AI增强语义分析**：通过通义千问提供深度语义分析和教育性反馈
 4. **批量代码分析能力**：支持多文件批量对比分析
 5. **详细的分析报告和改进建议**：提供针对性的优化建议
+6. **灵活的API配置**：支持从请求中动态配置API密钥和模型类型
+7. **超时控制机制**：防止AI服务调用长时间阻塞，提高系统稳定性
+8. **完善的异常处理**：提供清晰的错误信息和恢复机制
+9. **连接检查接口**：支持验证AI服务连接状态
+10. **自定义阈值设置**：可根据需求调整抄袭判定的相似度阈值
 
 ## 快速开始
 
 ### 系统要求
 
-- JDK 1.8或更高版本
-- Maven 3.6或更高版本
-- 足够的网络连接（用于访问千问API）
+- 建议JDK 1.8
+- 建议Maven 3.6~3.8.7(作者构建使用的maven版本)
+- 建议使用足够的网络连接（用于访问千问API）
 
 ### 千问API-KEY配置方法
 
@@ -78,18 +114,12 @@ dashscope:
 3. 运行应用程序
 
    ```bash
-   java -jar target\codeDuplicateChecking-1.0_alpha1.jar
+   java -jar target/codeDuplicateChecking-1.0_alpha2.jar
    ```
 
 ### 注意
 
 > 项目暂不包含自动化打包脚本，推荐使用Maven直接打包。
-
-3. 运行应用程序
-
-   ```bash
-   java -jar target\codeDuplicateChecking-1.0_alpha1.jar
-   ```
 
 运行成功后，应用将在`http://localhost:8080`上提供服务。
 
@@ -212,8 +242,8 @@ docker rm oj-code-duplicate-container
 
 #### 1.1 两代码块比较接口
 
-**URL**: `/api/v1/plagiarism/compare/two`
-**方法**: `POST`
+**URL**: `/api/v1/plagiarism/compare/two`  
+**方法**: `POST`  
 **请求体**:
 
 ```json
@@ -223,37 +253,107 @@ docker rm oj-code-duplicate-container
     "title": "代码标题1",
     "author": "作者1",
     "language": "Java",
-    "code": "public class Test { ... }"
+    "code": "public class Test { public static void main(String[] args) { System.out.println(\"Hello World\"); } }"
   },
   "codeBlock2": {
     "id": "block2",
     "title": "代码标题2",
     "author": "作者2",
     "language": "Java",
-    "code": "public class Demo { ... }"
+    "code": "public class Demo { public static void main(String[] args) { System.out.println(\"Hello World\"); } }"
   },
   "threshold": 0.7
 }
 ```
 
+**响应体**:
+
+```json
+{
+  "similarityScore": 0.95,
+  "plagiarism": true,
+  "block1Title": "代码标题1",
+  "block2Title": "代码标题2",
+  "threshold": 0.7,
+  "processingTimeMs": 150
+}
+```
+
 #### 1.2 批量代码比较接口
 
-**URL**: `/api/v1/plagiarism/compare/batch`
-**方法**: `POST`
+**URL**: `/api/v1/plagiarism/compare/batch`  
+**方法**: `POST`  
 **请求体**:
 
 ```json
 {
-  "codeBlocks": [ /* 多个代码块 */ ],
+  "codeBlocks": [
+    {
+      "id": "block1",
+      "title": "代码标题1",
+      "author": "作者1",
+      "language": "Java",
+      "code": "public class Test { ... }"
+    },
+    {
+      "id": "block2",
+      "title": "代码标题2",
+      "author": "作者2",
+      "language": "Java",
+      "code": "public class Demo { ... }"
+    },
+    {
+      "id": "block3",
+      "title": "代码标题3",
+      "author": "作者3",
+      "language": "Java",
+      "code": "public class Example { ... }"
+    }
+  ],
   "threshold": 0.7
 }
+```
 
-**注意**: 
+**响应体**:
+
+```json
+{
+  "totalPairs": 3,
+  "plagiarismPairs": 1,
+  "maxSimilarityScore": 0.95,
+  "avgSimilarityScore": 0.65,
+  "threshold": 0.7,
+  "processingTimeMs": 250,
+  "results": [
+    {
+      "block1Title": "代码标题1",
+      "block2Title": "代码标题2",
+      "similarityScore": 0.95,
+      "plagiarism": true
+    },
+    {
+      "block1Title": "代码标题1",
+      "block2Title": "代码标题3",
+      "similarityScore": 0.45,
+      "plagiarism": false
+    },
+    {
+      "block1Title": "代码标题2",
+      "block2Title": "代码标题3",
+      "similarityScore": 0.55,
+      "plagiarism": false
+    }
+  ]
+}
+```
+
+**注意**:
+
 - 代码块数组至少需要包含2个代码块，否则会返回400错误
 - 系统会自动进行参数验证并提供详细的错误信息
 - 接口实现了完善的异常处理机制，确保稳定性
 
-#### 1.3 获取支持的编程语言列表
+##### 1.3 获取支持的编程语言列表
 
 **URL**: `/api/v1/plagiarism/languages`
 **方法**: `GET`
@@ -279,51 +379,202 @@ docker rm oj-code-duplicate-container
   "defaultThreshold": 0.7,
   "minThreshold": 0.0,
   "maxThreshold": 1.0,
-  "recommendedThreshold": 0.7
+  "recommendedThreshold": 0.7,
+  "defaultModel": "qwen-plus",
+  "timeout": 30000
 }
 ```
+
+### API响应状态码
+
+|状态码|描述|说明|
+|------|----|----|
+|200|OK|请求成功|
+|400|Bad Request|请求参数错误或无效|
+|401|Unauthorized|API密钥无效或已过期|
+|403|Forbidden|禁止访问该资源|
+|404|Not Found|请求的资源不存在|
+|429|Too Many Requests|请求过于频繁，超出API速率限制|
+|500|Internal Server Error|服务器内部错误|
+|502|Bad Gateway|AI服务响应错误|
+|503|Service Unavailable|AI服务暂时不可用|
+
+### API调用最佳实践
+
+1. **API密钥管理**:
+   - 不要在代码中硬编码API密钥
+   - 使用环境变量或配置文件安全存储API密钥
+   - 定期轮换API密钥，确保安全性
+
+2. **错误处理**:
+   - 实现完善的错误处理逻辑，处理各种HTTP状态码
+   - 对于5xx错误，考虑实现重试机制
+   - 记录详细的错误日志，便于排查问题
+
+3. **性能优化**:
+   - 批量处理代码块，减少API调用次数
+   - 合理设置阈值，避免不必要的AI分析
+   - 对于大型项目，考虑分模块进行查重
+
+4. **安全措施**:
+   - 使用HTTPS协议保护API通信
+   - 实现请求限流，防止滥用
+   - 验证输入参数，防止注入攻击
+
+5. **使用建议**:
+   - 先使用本地查重功能过滤低相似度代码
+   - 仅对相似度较高的代码对进行AI增强分析
+   - 结合人工审查结果，提高查重准确性
 
 ### 2. AI增强分析接口
 
 #### 2.1 AI增强的两段代码比较分析
 
-**URL**: `/api/plagiarism/analysis/compare`
-**方法**: `POST`
+**URL**: `/api/v1/plagiarism/analysis/compare`  
+**方法**: `POST`  
 **请求体**:
 
 ```json
 {
-  "codeBlock1": { /* 第一段代码块 */ },
-  "codeBlock2": { /* 第二段代码块 */ },
-  "threshold": 0.75
+  "codeBlock1": {
+    "id": "block1",
+    "title": "代码标题1",
+    "author": "作者1",
+    "language": "Java",
+    "code": "public class Test { ... }"
+  },
+  "codeBlock2": {
+    "id": "block2",
+    "title": "代码标题2",
+    "author": "作者2",
+    "language": "Java",
+    "code": "public class Demo { ... }"
+  },
+  "threshold": 0.75,
+  "apiKey": "你的API密钥",
+  "model": "qwen-plus"
+}
+```
+
+**响应体**:
+
+```json
+{
+  "similarityScore": 0.85,
+  "plagiarism": true,
+  "analysis": "这两段代码在结构和逻辑上高度相似，存在明显的抄袭痕迹...",
+  "improvementSuggestions": [
+    "建议重构变量命名，提高代码可读性",
+    "考虑使用更现代的Java特性替代传统实现"
+  ]
 }
 ```
 
 #### 2.2 批量AI增强分析
 
-**URL**: `/api/plagiarism/analysis/batch`
-**方法**: `POST`
+**URL**: `/api/v1/plagiarism/analysis/batch`  
+**方法**: `POST`  
 **请求体**:
 
 ```json
 {
-  "codeBlocks": [ /* 多个代码块 */ ],
-  "threshold": 0.75
+  "codeBlocks": [
+    {
+      "id": "block1",
+      "title": "代码标题1",
+      "author": "作者1",
+      "language": "Java",
+      "code": "public class Test { ... }"
+    },
+    {
+      "id": "block2",
+      "title": "代码标题2",
+      "author": "作者2",
+      "language": "Java",
+      "code": "public class Demo { ... }"
+    }
+  ],
+  "threshold": 0.75,
+  "apiKey": "你的API密钥",
+  "model": "qwen-plus"
+}
+```
+
+**响应体**:
+
+```json
+{
+  "totalPairs": 1,
+  "plagiarismPairs": 1,
+  "maxSimilarityScore": 0.85,
+  "avgSimilarityScore": 0.85,
+  "threshold": 0.75,
+  "processingTimeMs": 1200,
+  "results": [
+    {
+      "block1Title": "代码标题1",
+      "block2Title": "代码标题2",
+      "similarityScore": 0.85,
+      "plagiarism": true,
+      "analysis": "这两段代码在结构和逻辑上高度相似..."
+    }
+  ],
+  "batchSummary": "批量分析完成，共发现1对疑似抄袭代码..."
 }
 ```
 
 #### 2.3 获取代码改进建议
 
-**URL**: `/api/plagiarism/analysis/improvement`
-**方法**: `POST`
+**URL**: `/api/v1/plagiarism/analysis/improvement`  
+**方法**: `POST`  
 **请求体**:
 
 ```json
 {
-  "originalCode": { /* 原始代码块 */ },
-  "suspiciousCode": { /* 可疑代码块 */ }
+  "originalCode": {
+    "id": "original",
+    "title": "原始代码",
+    "author": "原作者",
+    "language": "Java",
+    "code": "public class Test { ... }"
+  },
+  "suspiciousCode": {
+    "id": "suspicious",
+    "title": "可疑代码",
+    "author": "可疑作者",
+    "language": "Java",
+    "code": "public class Demo { ... }"
+  },
+  "apiKey": "你的API密钥",
+  "model": "qwen-plus"
 }
 ```
+
+**响应体**:
+
+```json
+{
+  "similarityScore": 0.85,
+  "plagiarism": true,
+  "detailedAnalysis": {
+    "similarityTypes": ["结构相似", "逻辑相似"],
+    "matchedSections": [
+      {
+        "originalStartLine": 5,
+        "originalEndLine": 15,
+        "suspiciousStartLine": 6,
+        "suspiciousEndLine": 16,
+        "similarity": 0.95
+      }
+    ],
+    "modificationMethods": ["变量名替换", "代码顺序调整"]
+  },
+  "improvementSuggestions": [
+    "建议重构变量命名，使用更具描述性的名称",
+    "考虑将重复代码提取为单独的方法或函数",
+    "添加适当的注释说明代码逻辑"
+  ]
+}```
 
 ### 3. 千问AI对话接口
 
@@ -335,8 +586,20 @@ docker rm oj-code-duplicate-container
 
 ```json
 {
-  "message": "你的问题或指令",
-  "systemPrompt": "可选的系统提示词"
+  "message": "请解释这段代码的功能：public class Test { ... }",
+  "systemPrompt": "你是一位专业的编程助手，请详细解释代码功能。",
+  "apiKey": "你的API密钥",
+  "model": "qwen-plus"
+}
+```
+
+**响应体**:
+
+```json
+{
+  "response": "这段代码定义了一个名为Test的Java类...",
+  "model": "qwen-plus",
+  "processingTimeMs": 800
 }
 ```
 
@@ -348,8 +611,60 @@ docker rm oj-code-duplicate-container
 
 ```json
 {
-  "message": "你的问题或指令",
-  "systemPrompt": "可选的系统提示词"
+  "message": "请解释这段代码的功能：public class Test { ... }",
+  "systemPrompt": "你是一位专业的编程助手，请详细解释代码功能。",
+  "apiKey": "你的API密钥",
+  "model": "qwen-plus"
+}
+```
+
+**响应**:
+
+流式返回JSON数据，每个数据块包含部分响应内容：
+
+```json
+{"content": "这段代码"}
+{"content": "定义了一个"}
+{"content": "名为Test的"}
+{"content": "Java类..."}
+{"content": "\n\n该类包含..."}
+```
+
+**注意**: 流式接口需要客户端支持处理流式响应。
+
+### 4. AI服务连接检查接口
+
+#### 4.1 AI连接状态检查
+
+**URL**: `/api/v1/plagiarism/analysis/check-connection`
+**方法**: `POST`
+**请求体**:
+
+```json
+{
+  "apiKey": "你的API密钥",
+  "model": "qwen-plus"
+}
+```
+
+**响应体**:
+
+```json
+{
+  "connected": true,
+  "message": "千问AI服务连接成功",
+  "model": "qwen-plus",
+  "version": "2.0"
+}
+```
+
+**错误响应示例**:
+
+```json
+{
+  "connected": false,
+  "message": "API密钥无效或已过期",
+  "errorCode": "INVALID_API_KEY"
 }
 ```
 
@@ -384,7 +699,7 @@ docker rm oj-code-duplicate-container
 - **0.3-0.5**：低度相似，可能有共同的实现思路
 - **0.3以下**：极低相似度，基本可以确定为独立实现
 
-## 注意事项
+## 使用时的注意事项
 
 1. 代码查重结果仅供参考，建议重要场景下进行人工复核
 2. 对于短代码或常见算法实现，可能会出现较高的相似度

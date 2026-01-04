@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>AI代码查重系统</title>
+    <title>基于千问AI的代码查重系统</title>
     <style>
         :root {
             --bg-color: #f5f7fa;
@@ -334,8 +334,8 @@
 <body>
     <div class="container">
         <header>
-            <h1>AI代码查重系统</h1>
-            <p class="subtitle">智能检测代码相似度，识别抄袭行为，提供深度分析与改进建议</p>
+            <h1>基于千问AI的代码查重系统</h1>
+            <p class="subtitle">通过借助千问AI，智能检测代码相似度，识别抄袭行为，提供深度分析与改进建议</p>
         </header>
         
         <div class="status-bar">
@@ -352,6 +352,32 @@
         </div>
         
         <div class="card">
+            <!-- AI配置部分 -->
+            <h2>AI配置</h2>
+            <div class="controls" style="margin-bottom: 20px;">
+                <div style="margin-bottom: 10px; width: 100%; max-width: 500px;">
+                    <label for="aiModel">AI模型类型: </label>
+                    <select id="aiModel" style="width: 100%; margin-top: 5px;">
+                        <option value="qwen-plus">qwen-plus</option>
+                        <option value="qwen-plus-latest">qwen-plus-latest</option>
+                        <option value="qwen3-max">qwen3-max</option>
+                        <option value="qwen3-max-preview">qwen3-max-preview</option>
+                        <option value="qwen-flash">qwen-flash</option>
+                        <option value="qwq-plus">qwq-plus</option>
+                        <option value="qwq-plus-latest">qwq-plus-latest</option>
+                        <option value="qwen-long">qwen-long</option>
+                    </select>
+                </div>
+                <div style="margin-bottom: 10px; width: 100%; max-width: 500px;">
+                    <label for="apiKey">API Key: </label>
+                    <input type="text" id="apiKey" placeholder="输入您的千问API Key" style="width: 100%; margin-top: 5px;">
+                </div>
+                <button onclick="checkAIConnection()" id="checkConnectionButton">检查AI连接</button>
+                <button class="secondary" onclick="useDefaultAIConfig()">使用默认配置</button>
+            </div>
+        </div>
+
+        <div class="card">
             <!-- 代码查重界面 -->
             <div id="plagiarism" class="tab-content active">
                 <h2>OJ代码查重</h2>
@@ -367,40 +393,7 @@
                 </div>
                 
                 <div id="codeBlocksContainer">
-                    <!-- 默认的两个代码块 -->
-                    <div class="code-block">
-                        <input type="text" placeholder="代码标题" class="code-title" value="代码块 1">
-                        <input type="text" placeholder="作者" class="code-author" value="未知作者">
-                        <div class="control-group">
-                            <select class="language-select">
-                                <option value="Java">Java</option>
-                                <option value="Python">Python</option>
-                                <option value="C++">C++</option>
-                                <option value="JavaScript">JavaScript</option>
-                                <option value="C">C</option>
-                                <option value="C#">C#</option>
-                            </select>
-                            <button class="secondary" onclick="removeCodeBlock(this)">删除</button>
-                        </div>
-                        <textarea placeholder="在这里粘贴代码..." class="code-content"></textarea>
-                    </div>
-                    
-                    <div class="code-block">
-                        <input type="text" placeholder="代码标题" class="code-title" value="代码块 2">
-                        <input type="text" placeholder="作者" class="code-author" value="未知作者">
-                        <div class="control-group">
-                            <select class="language-select">
-                                <option value="Java">Java</option>
-                                <option value="Python">Python</option>
-                                <option value="C++">C++</option>
-                                <option value="JavaScript">JavaScript</option>
-                                <option value="C">C</option>
-                                <option value="C#">C#</option>
-                            </select>
-                            <button class="secondary" onclick="removeCodeBlock(this)">删除</button>
-                        </div>
-                        <textarea placeholder="在这里粘贴代码..." class="code-content"></textarea>
-                    </div>
+                    <!-- 代码块将通过JavaScript动态生成 -->
                 </div>
                 
                 <h3>查重结果</h3>
@@ -412,34 +405,61 @@
 <script>
     let isAIConnected = false;
     
-    // 页面加载时检查AI连接状态
+    // 页面加载时检查AI连接状态并初始化代码块
     document.addEventListener('DOMContentLoaded', function() {
         checkAIConnection();
+        // 动态生成两个默认代码块
+        addCodeBlock();
+        addCodeBlock();
     });
     
     // 检查AI连接状态
     async function checkAIConnection() {
+        const checkConnectionButton = document.getElementById('checkConnectionButton');
+        const originalText = checkConnectionButton.textContent;
+        checkConnectionButton.textContent = '检查中...';
+        checkConnectionButton.disabled = true;
+        
         try {
-            // 尝试访问聊天接口进行测试
-            const response = await fetch('/api/v1/chat/text', {
+            const apiKey = document.getElementById('apiKey').value;
+            const model = document.getElementById('aiModel').value;
+            
+            // 尝试访问AI连接检查接口
+            const response = await fetch('/api/v1/plagiarism/analysis/check-connection', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
-                    message: "测试AI连接",
-                    systemPrompt: "仅用于测试连接，不需要实际响应"
+                    apiKey: apiKey,
+                    model: model
                 }),
-                timeout: 5000
+                signal: AbortSignal.timeout(10000) // 10秒超时
             });
             
-            isAIConnected = response.ok;
+            const result = await response.json();
+            isAIConnected = result.connected;
+            
+            // 显示连接结果
+            alert(result.message);
             
             // 更新UI状态
             updateAIStatus();
         } catch (error) {
             console.log('AI连接测试失败:', error);
             isAIConnected = false;
+            alert('AI连接测试失败: ' + (error.name === 'TimeoutError' ? '请求超时' : error.message));
             updateAIStatus();
+        } finally {
+            checkConnectionButton.textContent = originalText;
+            checkConnectionButton.disabled = false;
         }
+    }
+    
+    // 使用默认AI配置
+    function useDefaultAIConfig() {
+        document.getElementById('apiKey').value = '';
+        document.getElementById('aiModel').value = 'qwen-plus';
+        alert('已切换到默认AI配置');
+        checkAIConnection();
     }
     
     // 更新AI状态UI
@@ -568,19 +588,32 @@
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 60000); // 60秒超时
             
+            // 获取AI配置
+            const apiKey = document.getElementById('apiKey').value;
+            const model = document.getElementById('aiModel').value;
+            
             // 根据AI连接状态选择不同的API
             const apiUrl = isAIConnected ? 
-                '/api/plagiarism/analysis/batch' : 
-                '/api/v1/plagiarism/compare/batch';
+                '/api/v1/plagiarism/analysis/batch' : 
+                '/api/v1/plagiarism/analysis/batch';
                 
+            // 准备请求体
+            const requestBody = {
+                codeBlocks: codeBlocksData,
+                threshold: threshold
+            };
+            
+            // 如果使用AI增强版，添加AI配置
+            if (isAIConnected) {
+                requestBody.apiKey = apiKey;
+                requestBody.model = model;
+            }
+            
             // 发送请求到相应的查重端点
             const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    codeBlocks: codeBlocksData,
-                    threshold: threshold
-                }),
+                body: JSON.stringify(requestBody),
                 signal: controller.signal
             });
             
@@ -617,10 +650,10 @@
         // 从结果中提取基本数据
         const baseResult = result.baseResult || result;
         
-        // 修复：正确判断是否应该触发AI分析
+        // 正确判断是否应该触发AI分析
         const shouldTriggerAI = baseResult.maxSimilarityScore >= threshold;
         
-        // 修复：更准确的AI分析结果检测逻辑
+        // 更准确的AI分析结果检测逻辑
         const hasBatchSummary = result.batchSummary && result.batchSummary.trim() !== '';
         const hasAnyAnalysis = baseResult.results && baseResult.results.some(r => r.analysis && r.analysis.trim() !== '');
         const hasAIEnhancement = hasBatchSummary || hasAnyAnalysis;
@@ -680,7 +713,7 @@
                 cssClass = 'plagiarism-low';
             }
             
-            // 修复：为每个结果项添加更准确的AI状态
+            // 为每个结果项添加更准确的AI状态
             let aiStatusHTML = '';
             if (isAIConnected && pairResult.similarityScore >= threshold) {
                 if (pairResult.analysis && pairResult.analysis.trim() !== '') {

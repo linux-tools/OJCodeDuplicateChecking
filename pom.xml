@@ -20,7 +20,7 @@
     <!-- 与Hcode OJ项目保持一致的groupId和版本 -->
     <groupId>top.hcode</groupId>
     <artifactId>codeDuplicateChecking</artifactId>
-    <version>1.0_alpha2</version>
+    <version>1.0_alpha3</version>
     <packaging>jar</packaging>
 
     <properties>

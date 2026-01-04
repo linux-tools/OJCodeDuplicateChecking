@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 /**
@@ -23,6 +24,12 @@ public class PlagiarismAnalysisService {
      */
     @Value("${dashscope.api.key:}")
     private String qwenApiKey;
+    
+    /**
+     * AI模型类型，通过配置文件注入
+     */
+    @Value("${dashscope.model:qwen-plus}")
+    private String qwenModel;
     
     /**
      * AI提示词配置，用于获取代码查重分析所需的提示词模板
@@ -47,6 +54,22 @@ public class PlagiarismAnalysisService {
      * @return 增强的查重分析结果，包含基础查重结果和AI增强分析内容
      */
     public PlagiarismAnalysis getSmartPlagiarismAnalysis(CodeBlock codeBlock1, CodeBlock codeBlock2, double threshold) {
+        return getSmartPlagiarismAnalysis(codeBlock1, codeBlock2, threshold, null, null);
+    }
+    
+    /**
+     * 获取智能代码查重分析，结合千问AI提供深度分析和建议
+     * 支持自定义API Key和模型类型
+     * 
+     * @param codeBlock1 第一个代码块，包含代码内容、标题、作者和语言等信息
+     * @param codeBlock2 第二个代码块，包含代码内容、标题、作者和语言等信息
+     * @param threshold 抄袭阈值，超过此值的代码将被视为可能抄袭
+     * @param customApiKey 自定义API Key
+     * @param customModel 自定义模型类型
+     * @return 增强的查重分析结果，包含基础查重结果和AI增强分析内容
+     */
+    public PlagiarismAnalysis getSmartPlagiarismAnalysis(CodeBlock codeBlock1, CodeBlock codeBlock2, double threshold, 
+                                                        String customApiKey, String customModel) {
         // 首先执行标准查重分析
         PlagiarismResult baseResult = plagiarismService.compareTwoCodeBlocks(codeBlock1, codeBlock2, threshold);
         
@@ -65,17 +88,24 @@ public class PlagiarismAnalysisService {
             baseResult.setPlagiarism(true); // 标记为抄袭
         }
         
+        // 使用自定义API Key和模型（如果提供），否则使用配置文件中的值
+        String apiKeyToUse = (customApiKey != null && !customApiKey.isEmpty()) ? customApiKey : qwenApiKey;
+        String modelToUse = (customModel != null && !customModel.isEmpty()) ? customModel : qwenModel;
+        
         // 只要API密钥可用且相似度超过阈值，就使用千问进行深度分析
         // 无论是否被标记为抄袭，只要相似度超过阈值，就应该进行AI分析
-        boolean shouldUseAIAnalysis = !qwenApiKey.isEmpty() && (baseResult.isPlagiarism() || baseResult.getSimilarityScore() >= threshold);
+        boolean shouldUseAIAnalysis = !apiKeyToUse.isEmpty() && (baseResult.isPlagiarism() || baseResult.getSimilarityScore() >= threshold);
         
         if (shouldUseAIAnalysis) {
             try {
-                String qwenAnalysis = generateAIEnhancedAnalysis(codeBlock1, codeBlock2, analysis.getBaseResult());
+                String qwenAnalysis = generateAIEnhancedAnalysis(codeBlock1, codeBlock2, analysis.getBaseResult(), apiKeyToUse, modelToUse);
                 analysis.setAIEnhancedAnalysis(qwenAnalysis);
+            } catch (TimeoutException e) {
+                // 如果连接超时，记录错误并降级到基础分析
+                analysis.setAIError("AI助手连接超时，已降级到内置算法查重");
             } catch (Exception e) {
                 // 如果千问API调用失败，记录错误但不影响基础分析结果
-                analysis.setAIError("AI分析服务暂时不可用: " + e.getMessage());
+                analysis.setAIError("AI分析服务暂时不可用: " + e.getMessage() + "，已降级到内置算法查重");
             }
         }
         
@@ -92,6 +122,21 @@ public class PlagiarismAnalysisService {
      * @return 批量分析结果，包含所有代码对的比较结果和AI批量分析总结
      */
     public BatchPlagiarismAnalysis getBatchSmartAnalysis(List<CodeBlock> codeBlocks, double threshold) {
+        return getBatchSmartAnalysis(codeBlocks, threshold, null, null);
+    }
+    
+    /**
+     * 获取批量代码块的智能分析
+     * 支持自定义API Key和模型类型
+     * 
+     * @param codeBlocks 代码块列表，将对列表中的代码块进行两两比较分析
+     * @param threshold 抄袭阈值，用于判断代码对是否构成抄袭
+     * @param customApiKey 自定义API Key
+     * @param customModel 自定义模型类型
+     * @return 批量分析结果，包含所有代码对的比较结果和AI批量分析总结
+     */
+    public BatchPlagiarismAnalysis getBatchSmartAnalysis(List<CodeBlock> codeBlocks, double threshold, 
+                                                       String customApiKey, String customModel) {
         // 执行标准批量查重
         BatchPlagiarismResult baseResult = plagiarismService.compareMultipleCodeBlocks(codeBlocks, threshold);
         
@@ -103,13 +148,20 @@ public class PlagiarismAnalysisService {
                 .filter(result -> result.isPlagiarism() || result.getSimilarityScore() >= threshold)
                 .collect(Collectors.toList());
         
+        // 使用自定义API Key和模型（如果提供），否则使用配置文件中的值
+        String apiKeyToUse = (customApiKey != null && !customApiKey.isEmpty()) ? customApiKey : qwenApiKey;
+        String modelToUse = (customModel != null && !customModel.isEmpty()) ? customModel : qwenModel;
+        
         // 如果存在高相似度的代码对，使用千问进行总结分析
-        if (!qwenApiKey.isEmpty() && !highSimilarityResults.isEmpty()) {
+        if (!apiKeyToUse.isEmpty() && !highSimilarityResults.isEmpty()) {
             try {
-                String batchSummary = generateBatchSummary(highSimilarityResults, codeBlocks);
+                String batchSummary = generateBatchSummary(highSimilarityResults, codeBlocks, apiKeyToUse, modelToUse);
                 analysis.setBatchSummary(batchSummary);
+            } catch (TimeoutException e) {
+                // 如果连接超时，记录错误并降级到基础分析
+                analysis.setAIError("AI助手连接超时，已降级到内置算法查重");
             } catch (Exception e) {
-                analysis.setAIError("批量AI分析服务暂时不可用: " + e.getMessage());
+                analysis.setAIError("批量AI分析服务暂时不可用: " + e.getMessage() + "，已降级到内置算法查重");
             }
         }
         
@@ -123,13 +175,16 @@ public class PlagiarismAnalysisService {
      * @param code1 第一个代码块对象，包含代码内容和元数据
      * @param code2 第二个代码块对象，包含代码内容和元数据
      * @param baseResult 基础查重分析结果，包含相似度分数等基础数据
+     * @param apiKey API Key
+     * @param model 模型类型
      * @return 字符串形式的AI增强分析结果
      * @throws Exception 当AI调用或分析过程中出现异常时抛出
      */
-    private String generateAIEnhancedAnalysis(CodeBlock code1, CodeBlock code2, PlagiarismResult baseResult) throws Exception {
+    private String generateAIEnhancedAnalysis(CodeBlock code1, CodeBlock code2, PlagiarismResult baseResult, 
+                                            String apiKey, String model) throws Exception {
         // 使用配置类中的提示词
         String assistantPrompt = aiPromptConfig.getPrompts().getPlagiarism().getAssistant();
-        QwenAgent agent = new QwenAgent(qwenApiKey, assistantPrompt);
+        QwenAgent agent = new QwenAgent(apiKey, model, assistantPrompt);
         
         // 构建用户提示词，包含两个代码块的信息和原始查重率
         StringBuilder userPrompt = new StringBuilder();
@@ -173,13 +228,16 @@ public class PlagiarismAnalysisService {
      * 
      * @param highSimilarityResults 高相似度代码对的查重结果列表
      * @param allCodeBlocks 所有参与分析的代码块列表
+     * @param apiKey API Key
+     * @param model 模型类型
      * @return 字符串形式的批量分析总结报告
      * @throws Exception 当AI调用或分析过程中出现异常时抛出
      */
-    private String generateBatchSummary(List<PlagiarismResult> highSimilarityResults, List<CodeBlock> allCodeBlocks) throws Exception {
+    private String generateBatchSummary(List<PlagiarismResult> highSimilarityResults, List<CodeBlock> allCodeBlocks, 
+                                      String apiKey, String model) throws Exception {
         // 使用配置类中的提示词
         String assistantPrompt = aiPromptConfig.getPrompts().getPlagiarism().getAssistant();
-        QwenAgent agent = new QwenAgent(qwenApiKey, assistantPrompt);
+        QwenAgent agent = new QwenAgent(apiKey, model, assistantPrompt);
         
         // 构建用户提示词
         StringBuilder userPrompt = new StringBuilder();
@@ -191,7 +249,7 @@ public class PlagiarismAnalysisService {
                 .average()
                 .orElse(0.0);
         
-        userPrompt.append("整体代码集合原始平均查重率: " + String.format("%.1f%%", averageSimilarity * 100));
+        userPrompt.append("整体代码集合原始平均查重率: " + String.format("%.1f%%", averageSimilarity * 100)+"\n\n"+"代码如下：\n"+allCodeBlocks.toString());
         
         // 调用千问API获取总结分析
         String aiResponse = agent.chat(userPrompt.toString());
@@ -237,6 +295,27 @@ public class PlagiarismAnalysisService {
          * 改进建议，针对代码提供的优化和改进指导
          */
         private String improvementSuggestions;
+        
+        /**
+         * AI连接状态
+         */
+        private boolean aiConnected = true;
+        
+        /**
+         * 获取AI连接状态
+         * @return AI连接状态
+         */
+        public boolean isAiConnected() {
+            return aiConnected;
+        }
+        
+        /**
+         * 设置AI连接状态
+         * @param aiConnected AI连接状态
+         */
+        public void setAiConnected(boolean aiConnected) {
+            this.aiConnected = aiConnected;
+        }
         
         /**
          * 构造函数
