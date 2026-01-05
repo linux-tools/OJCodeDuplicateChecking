@@ -3,13 +3,13 @@
 ## 项目展示
 
 总体界面
-![1](./img/example1.png)
+![图 1](img/example1.png)
 
 千问模型选择
-![2](./img/example2.png)
+![图 2](img/example2.png)
 
 批量查重结果展示
-![3](./img/example3.png)
+![图 3](img/example3.png)
 
 ## 更新日志
 
