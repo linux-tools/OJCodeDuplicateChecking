@@ -1,15 +1,20 @@
 # 千问AI代码查重系统(OJ Code Duplicate Checking)
 
+[![Java](https://img.shields.io/badge/Java-1.8-informational)](http://openjdk.java.net/)
+[![Spring Boot](https://img.shields.io/badge/Spring_Boot-2.7.0-informational)](https://spring.io/projects/spring-boot)
+[![Maven](https://img.shields.io/badge/Maven-3.6+-informational)](https://maven.apache.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 ## 项目展示
 
 总体界面
-![1](./img/example1.png)
+![图 1](img/example1.png)
 
 千问模型选择
-![2](./img/example2.png)
+![图 2](img/example2.png)
 
 批量查重结果展示
-![3](./img/example3.png)
+![图 3](img/example3.png)
 
 ## 更新日志
 
